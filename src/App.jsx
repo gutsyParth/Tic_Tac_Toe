@@ -1,6 +1,7 @@
 import GameBoard from "./components/GameBoard";
 import Player from "./components/Player";
 import Log from "./components/Log";
+import GameOver from "./components/GameOver";
 import { useState } from "react";
 import { WINNING_COMBINATIONS } from "./winning-combinations";
 
@@ -21,12 +22,17 @@ function deriveActivePlayer(gameTurns) {
 }
 
 function App() {
+  const [players, setPlayers] = useState({
+    X: "Player 1",
+    O: "Player 2",
+  });
+
   const [gameTurns, setGameTurns] = useState([]);
   const [hasWinner, setHasWinner] = useState(false);
 
   const activePlayer = deriveActivePlayer(gameTurns);
 
-  let gameBoard = initialGameBoard;
+  let gameBoard = [...initialGameBoard.map((array) => [...array])];
 
   for (const turn of gameTurns) {
     const { square, player } = turn;
@@ -50,9 +56,11 @@ function App() {
       firstSqaureSymbol === secondSquareSymbol &&
       firstSqaureSymbol === thirdSqureSymbol
     ) {
-      winner = firstSqaureSymbol;
+      winner = players[firstSqaureSymbol];
     }
   }
+
+  const hasDraw = gameTurns.length === 9 && !winner;
 
   function handleSelectSquare(rowIndex, colIndex) {
     setGameTurns((prevTurns) => {
@@ -73,6 +81,19 @@ function App() {
     });
   }
 
+  function handleRestart() {
+    setGameTurns([]);
+  }
+
+  function handlePlayerNameChange(symbol, newName) {
+    setPlayers((prevPlayers) => {
+      return {
+        ...prevPlayers,
+        [symbol]: newName,
+      };
+    });
+  }
+
   return (
     <main>
       <div id="game-container">
@@ -81,6 +102,7 @@ function App() {
             initialName="Player 1"
             symbol="X"
             isActive={activePlayer === "X"}
+            onChangeName={handlePlayerNameChange}
           />
           <Player
             initialName="Player 2"
@@ -88,7 +110,9 @@ function App() {
             isActive={activePlayer === "O"}
           />
         </ol>
-        {winner && <p>You won, {winner}!</p>}
+        {(winner || hasDraw) && (
+          <GameOver winner={winner} onRestart={handleRestart} />
+        )}
         <GameBoard onSelectSquare={handleSelectSquare} board={gameBoard} />
       </div>
       <Log turns={gameTurns} />
